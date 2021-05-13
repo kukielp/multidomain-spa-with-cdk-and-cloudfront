@@ -22,7 +22,7 @@ export class wildCardStaticApp extends cdk.Stack {
       This will pick up deploytime command line context parameters 
       eg:  cdk deploy -c primaryDomain=exampledomain.com 
     */
-    const primaryDomain = "inspecthero.com"//this.node.tryGetContext('primaryDomain');
+    const primaryDomain = "replaceme"//this.node.tryGetContext('primaryDomain');
 
     /*
       Use the name of a Route53 hosted zone that exists in your account, replace 
