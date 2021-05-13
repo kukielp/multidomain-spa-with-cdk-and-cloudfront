@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-import * as cdk from '@aws-cdk/core';
+
+import { Construct }  from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import { wildCardStaticApp } from '../lib/wildCardStaticApp-stack';
 
 const app = new cdk.App();
