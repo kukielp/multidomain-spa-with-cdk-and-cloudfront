@@ -1,22 +1,28 @@
-import cdk = require('@aws-cdk/core');
-import { Bucket } from '@aws-cdk/aws-s3';
-import { BucketDeployment, Source } from '@aws-cdk/aws-s3-deployment';
-import * as cloudfront from '@aws-cdk/aws-cloudfront';
-import * as acm from '@aws-cdk/aws-certificatemanager';
-import * as route53 from '@aws-cdk/aws-route53';
-import * as targets from '@aws-cdk/aws-route53-targets';
+import * as cdk from 'aws-cdk-lib';
+
+import { aws_s3 as s3 } from 'aws-cdk-lib';
+import { aws_s3_deployment } from 'aws-cdk-lib';
+import { aws_cloudfront } from 'aws-cdk-lib';
+import { aws_certificatemanager as acm } from 'aws-cdk-lib';
+import { aws_route53 as route53 } from 'aws-cdk-lib';
+import { aws_route53_targets as targets } from 'aws-cdk-lib';
+
+
+import { Construct }  from 'constructs';
+
+
 
 const websiteDistSourcePath = './app';
 
 export class wildCardStaticApp extends cdk.Stack {
-  constructor(scope: cdk.App, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     /*
       This will pick up deploytime command line context parameters 
       eg:  cdk deploy -c primaryDomain=exampledomain.com 
     */
-    const primaryDomain = this.node.tryGetContext('primaryDomain');
+    const primaryDomain = "replaceme"//this.node.tryGetContext('primaryDomain');
 
     /*
       Use the name of a Route53 hosted zone that exists in your account, replace 
@@ -25,19 +31,19 @@ export class wildCardStaticApp extends cdk.Stack {
     const subDomain = `*.${primaryDomain}`
 
     // Create a private S3 bucket
-    const sourceBucket = new Bucket(this, 'cdk-mypoc-website-s3', {
+    const sourceBucket = new s3.Bucket(this, 'cdk-mypoc-website-s3', {
       websiteIndexDocument: 'index.html',
       bucketName: `wildcard-${primaryDomain}`
     });
 
-    const originAccessIdentity = new cloudfront.OriginAccessIdentity(this, 'OIA', {
+    const originAccessIdentity = new aws_cloudfront.OriginAccessIdentity(this, 'OIA', {
       comment: "Setup access from CloudFront to the bucket ( read )"
     });
     sourceBucket.grantRead(originAccessIdentity);
 
     // Deploy the source code from the /app folder, in this example thats just 1 file.
-    new BucketDeployment(this, 'DeployWebsite', {
-      sources: [Source.asset(websiteDistSourcePath)],
+    new aws_s3_deployment.BucketDeployment(this, 'DeployWebsite', {
+      sources: [aws_s3_deployment.Source.asset(websiteDistSourcePath)],
       destinationBucket: sourceBucket
     });
 
@@ -54,7 +60,7 @@ export class wildCardStaticApp extends cdk.Stack {
     });
 
     // Create the CloudFront Distribution, set the alternate CNAMEs and pass in the ACM ARN of the cert created.
-    const cfDist = new cloudfront.CloudFrontWebDistribution(this, 'myDist', {
+    const cfDist = new aws_cloudfront.CloudFrontWebDistribution(this, 'myDist', {
       originConfigs: [
         {
           s3OriginSource: {
@@ -66,9 +72,13 @@ export class wildCardStaticApp extends cdk.Stack {
           ]
         }
       ],
-      aliasConfiguration: {
-        acmCertRef: myCertificate.certificateArn,
-        names: [subDomain],
+      viewerCertificate: {
+        
+        aliases: [subDomain],
+        props: {
+            acmCertificateArn: myCertificate.certificateArn,
+            sslSupportMethod: "sni-only",
+          }
       }
     });
   
